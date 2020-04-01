@@ -1,3 +1,6 @@
+# Minimum amount of players
+min_players: 2
+
 # Maximum amount of players
 max_players: 12
 
