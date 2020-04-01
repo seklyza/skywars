@@ -21,8 +21,8 @@ public class WaitingSidebar {
         return new WaitingSidebar(size);
     }
 
-    public void render(Objective sidebar) {
-        Map<Integer, String> lines = LineManager.builder()
+    public Map<Integer, String> build() {
+        return LineManager.builder()
                 .newLine()
                 .add("Players: §a%s/%s", size, MAX_PLAYERS)
                 .newLine()
@@ -30,7 +30,5 @@ public class WaitingSidebar {
                 .newLine()
                 .add("§ewww.seklyza.com")
                 .build();
-
-        SidebarUtils.render(sidebar, lines);
     }
 }

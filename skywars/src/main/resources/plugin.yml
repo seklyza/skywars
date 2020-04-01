@@ -2,3 +2,7 @@ name: Skywars
 main: com.seklyza.skywars.Main
 version: ${project.version}
 api-version: 1.15
+commands:
+  game:
+    usage: §c/<command> [start|stop] [interval]
+    description: Starts the game.

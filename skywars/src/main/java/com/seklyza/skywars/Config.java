@@ -1,6 +1,7 @@
 package com.seklyza.skywars;
 
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import static com.seklyza.skywars.utils.LocationUtils.parseLocations;
@@ -9,10 +10,14 @@ public class Config {
     private Main plugin = Main.getPlugin(Main.class);
     private FileConfiguration config = plugin.getConfig();
 
-    public int MIN_PLAYERS = config.getInt("min_players");
-    public int MAX_PLAYERS = config.getInt("max_players");
-    public int TIME_BEFORE_START = config.getInt("time_before_start");
-    public Location[] SPAWN_POINTS = parseLocations(plugin.getServer().getWorld("world"), config.getStringList("spawn_points"));
+    public final int MIN_PLAYERS = config.getInt("min_players");
+    public final boolean AUTO_START = MIN_PLAYERS != -1; // If min_players is set to -1 we'll never start the game!
+    public final int MAX_PLAYERS = config.getInt("max_players");
+    public final int TIME_BEFORE_START = config.getInt("time_before_start");
+
+    public Location[] getSpawnPoints(World world) {
+        return parseLocations(world, config.getStringList("spawn_points"));
+    }
 
     public Config() {
         config.options().copyDefaults(true);

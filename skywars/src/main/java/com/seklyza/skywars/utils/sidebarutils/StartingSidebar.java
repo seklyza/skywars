@@ -23,20 +23,8 @@ public class StartingSidebar {
         return new StartingSidebar(size, seconds);
     }
 
-    public int getSize() {
-        return size;
-    }
-
-    public int getMaxPlayers() {
-        return MAX_PLAYERS;
-    }
-
-    public int getSeconds() {
-        return seconds;
-    }
-
-    public void render(Objective sidebar) {
-        Map<Integer, String> lines = LineManager.builder()
+    public Map<Integer, String> build() {
+        return LineManager.builder()
                 .newLine()
                 .add("Players: §a%s/%s", size, MAX_PLAYERS)
                 .newLine()
@@ -44,7 +32,5 @@ public class StartingSidebar {
                 .newLine()
                 .add("§ewww.seklyza.com")
                 .build();
-
-        SidebarUtils.render(sidebar, lines);
     }
 }

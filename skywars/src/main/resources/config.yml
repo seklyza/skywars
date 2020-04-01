@@ -1,13 +1,6 @@
-# Minimum amount of players
 min_players: 2
-
-# Maximum amount of players
 max_players: 12
-
-# Time before start
 time_before_start: 30
-
-# Spawn points for the 1st map
 spawn_points:
   - 53.5 110 5.5 90 0
   - 33.5 111 28.5 126 8
