@@ -18,6 +18,6 @@ public class PlayerQuit implements Listener {
         Player player = event.getPlayer();
         int size = plugin.getServer().getOnlinePlayers().size();
 
-        plugin.getServer().broadcastMessage(String.format("§9Left> §c%s §7left the game. §c(%s/%s)", player.getName(), size - 1, MAX_PLAYERS));
+        plugin.getServer().broadcastMessage(String.format("§9Left> §e%s §7left the game. §c(%s/%s)", player.getName(), size - 1, MAX_PLAYERS));
     }
 }
