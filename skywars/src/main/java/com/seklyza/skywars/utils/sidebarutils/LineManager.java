@@ -1,4 +1,4 @@
-package com.seklyza.skywars.utils;
+package com.seklyza.skywars.utils.sidebarutils;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -11,6 +11,7 @@ public class Config {
 
     public int MIN_PLAYERS = config.getInt("min_players");
     public int MAX_PLAYERS = config.getInt("max_players");
+    public int TIME_BEFORE_START = config.getInt("time_before_start");
     public Location[] SPAWN_POINTS = parseLocations(plugin.getServer().getWorld("world"), config.getStringList("spawn_points"));
 
     public Config() {
