@@ -11,7 +11,6 @@ public class Config {
     private FileConfiguration config = plugin.getConfig();
 
     public final int MIN_PLAYERS = config.getInt("min_players");
-    public final boolean AUTO_START = MIN_PLAYERS != -1; // If min_players is set to -1 we'll never start the game!
     public final int MAX_PLAYERS = config.getInt("max_players");
     public final int TIME_BEFORE_START = config.getInt("time_before_start");
 

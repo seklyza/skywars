@@ -3,29 +3,42 @@ package com.seklyza.skywars.game;
 import com.seklyza.skywars.Config;
 import com.seklyza.skywars.Main;
 import com.seklyza.skywars.tasks.StartCountdownTask;
+import com.seklyza.skywars.tasks.TimeElapsedTask;
 import com.seklyza.skywars.utils.sidebarutils.SidebarUtils;
 import com.seklyza.skywars.utils.sidebarutils.WaitingSidebar;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.scheduler.BukkitScheduler;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.ScoreboardManager;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class Game {
     private final Main plugin = Main.getPlugin(Main.class);
     private final ScoreboardManager scoreboardManager = plugin.getServer().getScoreboardManager();
     private final Config config = plugin.getConfigVariables();
     private final World world;
+    private final BukkitScheduler scheduler = plugin.getServer().getScheduler();
     private final Location[] SPAWN_POINTS;
     private final int MIN_PLAYERS = config.MIN_PLAYERS;
     private final int MAX_PLAYERS = config.MAX_PLAYERS;
-    private final boolean AUTO_START = config.AUTO_START;
     private final int TIME_BEFORE_START = config.TIME_BEFORE_START;
 
     private GameState gameState = GameState.WAITING;
+    private Map<UUID, Player> alivePlayers = new HashMap<>();
+    private BukkitTask startCountdownTask;
+
+    public Map<UUID, Player> getAlivePlayers() {
+        return alivePlayers;
+    }
 
     public Game() {
         world = plugin.getServer().createWorld(new WorldCreator("map"));
@@ -44,7 +57,7 @@ public class Game {
 
         int size = plugin.getServer().getOnlinePlayers().size();
 
-        if (size >= MAX_PLAYERS && (gameState == GameState.WAITING || gameState == GameState.STARTING)) {
+        if (size >= MAX_PLAYERS || gameState == GameState.STARTING) {
             player.kickPlayer("§cThe game has already started! Try again later!");
 
             return;
@@ -61,16 +74,34 @@ public class Game {
 
         SidebarUtils.renderAll(plugin, WaitingSidebar.of(size).build());
 
-        if (size < MIN_PLAYERS || gameState != GameState.WAITING || !AUTO_START)
+        if (size < MIN_PLAYERS)
             return; // We won't start the game here.
 
         startCountdown();
     }
 
     public void onPlayerQuit(Player player) {
-        int size = plugin.getServer().getOnlinePlayers().size();
+        String message = "§9Left> §e%s §7left the game. §c(%s/%s)";
 
-        plugin.getServer().broadcastMessage(String.format("§9Left> §e%s §7left the game. §c(%s/%s)", player.getName(), size - 1, MAX_PLAYERS));
+        if (gameState == GameState.STARTING) {
+            int size = plugin.getServer().getOnlinePlayers().size();
+            if (size < MIN_PLAYERS) {
+                stopGame();
+                plugin.getServer().broadcastMessage(String.format(message, player.getName(), size - 1, MAX_PLAYERS));
+            }
+        } else if (gameState == GameState.INGAME) {
+            alivePlayers.remove(player.getUniqueId());
+            int size = alivePlayers.size();
+
+            if (size <= 1) {
+                stopGame();
+                return;
+            }
+
+            if (alivePlayers.containsKey(player.getUniqueId())) {
+                plugin.getServer().broadcastMessage(String.format(message, player.getName(), size - 1, MAX_PLAYERS));
+            }
+        }
     }
 
     public void startCountdown() {
@@ -78,22 +109,27 @@ public class Game {
     }
 
     public void startCountdown(int interval) {
+        if (gameState != GameState.WAITING) return;
         gameState = GameState.STARTING;
 
         StartCountdownTask startCountdownTask = new StartCountdownTask(interval);
-        int startCountdownTaskId = plugin.getServer().getScheduler().runTaskTimer(plugin, startCountdownTask, 0, 20).getTaskId();
-        startCountdownTask.setTaskId(startCountdownTaskId);
+        this.startCountdownTask = scheduler.runTaskTimer(plugin, startCountdownTask, 0, 20);
+        startCountdownTask.setTaskId(this.startCountdownTask.getTaskId());
     }
 
     public void startGame() {
+        stopTask(startCountdownTask);
+        world.setGameRule(GameRule.FALL_DAMAGE, false);
         gameState = GameState.INGAME;
-        plugin.getServer().broadcastMessage("§9Skywars> §7The game has started!!!");
-
+        plugin.getServer().broadcastMessage("§9Game> §7The game has started!!!");
 
         for (Player player : plugin.getServer().getOnlinePlayers()) {
-            // Break the glass
-            Chunk chunk = player.getLocation().getChunk();
+            player.setGameMode(GameMode.SURVIVAL);
+            alivePlayers.put(player.getUniqueId(), player);
+        }
 
+        // Break the glass in every loaded chunk.
+        for (Chunk chunk : world.getLoadedChunks()) {
             int X = chunk.getX() * 16;
             int Z = chunk.getZ() * 16;
 
@@ -107,6 +143,22 @@ public class Game {
                     }
                 }
             }
+        }
+
+        scheduler.runTaskLater(plugin, () -> world.setGameRule(GameRule.FALL_DAMAGE, true), 20 * 2);
+        TimeElapsedTask timeElapsedTask = new TimeElapsedTask();
+        scheduler.runTaskTimer(plugin, timeElapsedTask, 0, 20);
+    }
+
+    public void stopGame() {
+        plugin.getServer().broadcastMessage("§9Game> §7The game has been stopped!");
+
+        plugin.getServer().reload();
+    }
+
+    private void stopTask(BukkitTask task) {
+        if (task != null && scheduler.isCurrentlyRunning(task.getTaskId())) {
+            scheduler.cancelTask(task.getTaskId());
         }
     }
 

@@ -31,7 +31,7 @@ public class StartCountdownTask implements Runnable {
 
         // For example: 30, 25, 20, 15, 10, 5, 4, 3, 2, 1
         if ((remainingSeconds % 5 == 0 || remainingSeconds < 5)) {
-            plugin.getServer().broadcastMessage(String.format("§9Skywars> §7Starting game in §e%s §7second%s!", remainingSeconds, remainingSeconds == 1 ? "" : "s"));
+            plugin.getServer().broadcastMessage(String.format("§9Game> §7Starting game in §e%s §7second%s!", remainingSeconds, remainingSeconds == 1 ? "" : "s"));
         }
 
         int size = plugin.getServer().getOnlinePlayers().size();
