@@ -1,0 +1,4 @@
+name: Skywars
+main: com.seklyza.skywars.Main
+version: ${project.version}
+api-version: 1.15
