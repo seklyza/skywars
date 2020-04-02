@@ -42,10 +42,10 @@ public class GameCommand implements CommandExecutor {
     }
 
     private void announceStart() {
-        plugin.getServer().broadcastMessage("§9Game> §7The game has been started manually by a moderator!");
+        plugin.getServer().broadcastMessage("§9Game> §7The game has been started by an operator!");
     }
 
     private void announceStop() {
-        plugin.getServer().broadcastMessage("§9Game> §7The game has been stopped manually by a moderator!");
+        plugin.getServer().broadcastMessage("§9Game> §7The game has been stopped by an operator!");
     }
 }
