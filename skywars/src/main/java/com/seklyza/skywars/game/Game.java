@@ -39,6 +39,10 @@ public class Game {
     private Map<UUID, Integer> kills = new HashMap<>();
     private BukkitTask startCountdownTask;
 
+    public GameState getGameState() {
+        return gameState;
+    }
+
     public Map<UUID, Player> getAlivePlayers() {
         return alivePlayers;
     }
