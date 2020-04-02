@@ -34,7 +34,7 @@ public class GameCommand implements CommandExecutor {
             }
         } else if (type.equalsIgnoreCase("stop") && args.length == 1) {
             announceStop();
-            game.stopGame();
+            plugin.getServer().reload();
             return true;
         }
 

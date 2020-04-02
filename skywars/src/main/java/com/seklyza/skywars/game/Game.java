@@ -36,10 +36,15 @@ public class Game {
     private GameState gameState = GameState.WAITING;
     private int currentIndex = 0;
     private Map<UUID, Player> alivePlayers = new HashMap<>();
+    private Map<UUID, Integer> kills = new HashMap<>();
     private BukkitTask startCountdownTask;
 
     public Map<UUID, Player> getAlivePlayers() {
         return alivePlayers;
+    }
+
+    public Map<UUID, Integer> getKills() {
+        return kills;
     }
 
     public Game() {
@@ -67,6 +72,12 @@ public class Game {
 
         Location spawnPoint = SPAWN_POINTS[currentIndex++ % MAX_PLAYERS];
         player.teleport(spawnPoint);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            for (Player onlinePlayer : plugin.getServer().getOnlinePlayers()) {
+                onlinePlayer.showPlayer(plugin, player);
+                player.showPlayer(plugin, onlinePlayer);
+            }
+        }, 10);
         plugin.getServer().broadcastMessage(String.format("§9Join> §e%s §7joined the game. §a(%s/%s)", player.getName(), size, MAX_PLAYERS));
         Scoreboard scoreboard = scoreboardManager.getNewScoreboard();
         player.setScoreboard(scoreboard);
@@ -76,11 +87,6 @@ public class Game {
 
         if (gameState == GameState.WAITING) {
             SidebarUtils.renderAll(plugin, WaitingSidebar.of(size).build());
-        }
-
-        for (Player onlinePlayer : plugin.getServer().getOnlinePlayers()) {
-            onlinePlayer.showPlayer(plugin, player);
-            player.showPlayer(plugin, onlinePlayer);
         }
 
         if (size < MIN_PLAYERS || !AUTO_START)
@@ -98,14 +104,16 @@ public class Game {
             if (gameState == GameState.WAITING) {
                 SidebarUtils.renderAll(plugin, WaitingSidebar.of(size).build());
             } else if (size < MIN_PLAYERS) {
-                stopGame();
+                stopGame(null);
             }
         } else if (gameState == GameState.INGAME) {
             alivePlayers.remove(player.getUniqueId());
             int size = alivePlayers.size();
 
             if (size <= 1) {
-                stopGame();
+                alivePlayers.forEach((uuid, winner) -> {
+                    stopGame(winner, true);
+                });
                 return;
             }
 
@@ -137,6 +145,7 @@ public class Game {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             player.setGameMode(GameMode.SURVIVAL);
             alivePlayers.put(player.getUniqueId(), player);
+            kills.put(player.getUniqueId(), 0);
         }
 
         // Break the glass in every loaded chunk.
@@ -164,10 +173,23 @@ public class Game {
         scheduler.runTaskTimer(plugin, timeElapsedTask, 0, 20);
     }
 
-    public void stopGame() {
-        plugin.getServer().broadcastMessage("§9Game> §7The game has been stopped!");
+    public void stopGame(Player winner) {
+        stopGame(winner, false);
+    }
 
-        plugin.getServer().reload();
+
+    public void stopGame(Player winner, boolean wait) {
+        if (winner == null) {
+            plugin.getServer().broadcastMessage("§9Game> §7The game has been stopped.");
+        } else {
+            plugin.getServer().broadcastMessage(String.format("§4§lGAME OVER!!! §a%s §cwon with §a%s §ckills!", winner.getName(), kills.get(winner.getUniqueId())));
+        }
+
+        if (wait) {
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                plugin.getServer().reload();
+            }, 20 * 2);
+        } else plugin.getServer().reload();
     }
 
     private void stopTask(BukkitTask task) {

@@ -22,6 +22,7 @@ public class PlayerDeath implements Listener {
         if (!game.getAlivePlayers().containsKey(player.getUniqueId())) return;
         String message = String.format("§cGame> §e%s §7was killed!", player.getName());
         if (player.getKiller() != null) {
+            game.getKills().put(player.getKiller().getUniqueId(), game.getKills().get(player.getKiller().getUniqueId()) + 1);
             message = String.format("§cGame> §e%s §7was killed by §e%s§7!", player.getName(), player.getKiller().getName());
         }
 
