@@ -28,11 +28,13 @@ public class Game {
     private final World world;
     private final BukkitScheduler scheduler = plugin.getServer().getScheduler();
     private final Location[] SPAWN_POINTS;
+    private final boolean AUTO_START = config.AUTO_START;
     private final int MIN_PLAYERS = config.MIN_PLAYERS;
     private final int MAX_PLAYERS = config.MAX_PLAYERS;
     private final int TIME_BEFORE_START = config.TIME_BEFORE_START;
 
     private GameState gameState = GameState.WAITING;
+    private int currentIndex = 0;
     private Map<UUID, Player> alivePlayers = new HashMap<>();
     private BukkitTask startCountdownTask;
 
@@ -57,13 +59,13 @@ public class Game {
 
         int size = plugin.getServer().getOnlinePlayers().size();
 
-        if (size >= MAX_PLAYERS || gameState == GameState.STARTING) {
+        if (size >= MAX_PLAYERS || gameState == GameState.INGAME) {
             player.kickPlayer("§cThe game has already started! Try again later!");
 
             return;
         }
 
-        Location spawnPoint = SPAWN_POINTS[size];
+        Location spawnPoint = SPAWN_POINTS[currentIndex++ % MAX_PLAYERS];
         player.teleport(spawnPoint);
         plugin.getServer().broadcastMessage(String.format("§9Join> §e%s §7joined the game. §a(%s/%s)", player.getName(), size, MAX_PLAYERS));
         Scoreboard scoreboard = scoreboardManager.getNewScoreboard();
@@ -72,9 +74,16 @@ public class Game {
         sidebar.setDisplaySlot(DisplaySlot.SIDEBAR);
         sidebar.setDisplayName("§6§lSKYWARS");
 
-        SidebarUtils.renderAll(plugin, WaitingSidebar.of(size).build());
+        if (gameState == GameState.WAITING) {
+            SidebarUtils.renderAll(plugin, WaitingSidebar.of(size).build());
+        }
 
-        if (size < MIN_PLAYERS)
+        for (Player onlinePlayer : plugin.getServer().getOnlinePlayers()) {
+            onlinePlayer.showPlayer(plugin, player);
+            player.showPlayer(plugin, onlinePlayer);
+        }
+
+        if (size < MIN_PLAYERS || !AUTO_START)
             return; // We won't start the game here.
 
         startCountdown();
@@ -83,11 +92,13 @@ public class Game {
     public void onPlayerQuit(Player player) {
         String message = "§9Left> §e%s §7left the game. §c(%s/%s)";
 
-        if (gameState == GameState.STARTING) {
-            int size = plugin.getServer().getOnlinePlayers().size();
-            if (size < MIN_PLAYERS) {
+        if (gameState == GameState.STARTING || gameState == GameState.WAITING) {
+            int size = plugin.getServer().getOnlinePlayers().size() - 1;
+            plugin.getServer().broadcastMessage(String.format(message, player.getName(), size, MAX_PLAYERS));
+            if (gameState == GameState.WAITING) {
+                SidebarUtils.renderAll(plugin, WaitingSidebar.of(size).build());
+            } else if (size < MIN_PLAYERS) {
                 stopGame();
-                plugin.getServer().broadcastMessage(String.format(message, player.getName(), size - 1, MAX_PLAYERS));
             }
         } else if (gameState == GameState.INGAME) {
             alivePlayers.remove(player.getUniqueId());
@@ -145,7 +156,10 @@ public class Game {
             }
         }
 
-        scheduler.runTaskLater(plugin, () -> world.setGameRule(GameRule.FALL_DAMAGE, true), 20 * 2);
+        scheduler.runTaskLater(plugin, () -> {
+            world.setGameRule(GameRule.FALL_DAMAGE, true);
+            world.setDifficulty(Difficulty.NORMAL);
+        }, 20 * 2);
         TimeElapsedTask timeElapsedTask = new TimeElapsedTask();
         scheduler.runTaskTimer(plugin, timeElapsedTask, 0, 20);
     }

@@ -1,3 +1,4 @@
+auto_start: 1
 min_players: 2
 max_players: 12
 time_before_start: 30

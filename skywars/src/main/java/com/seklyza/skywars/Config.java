@@ -10,6 +10,7 @@ public class Config {
     private Main plugin = Main.getPlugin(Main.class);
     private FileConfiguration config = plugin.getConfig();
 
+    public final boolean AUTO_START = config.getInt("auto_start") == 1;
     public final int MIN_PLAYERS = config.getInt("min_players");
     public final int MAX_PLAYERS = config.getInt("max_players");
     public final int TIME_BEFORE_START = config.getInt("time_before_start");

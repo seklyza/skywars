@@ -2,8 +2,10 @@ package com.seklyza.skywars;
 
 import com.seklyza.skywars.commands.GameCommand;
 import com.seklyza.skywars.game.Game;
+import com.seklyza.skywars.listeners.PlayerDeath;
 import com.seklyza.skywars.listeners.PlayerJoin;
 import com.seklyza.skywars.listeners.PlayerQuit;
+import com.seklyza.skywars.listeners.PlayerRespawn;
 import org.bukkit.Location;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.entity.Player;
@@ -69,5 +71,7 @@ public class Main extends JavaPlugin {
 
         pm.registerEvents(new PlayerJoin(), this);
         pm.registerEvents(new PlayerQuit(), this);
+        pm.registerEvents(new PlayerDeath(), this);
+        pm.registerEvents(new PlayerRespawn(), this);
     }
 }
